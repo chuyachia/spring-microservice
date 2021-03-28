@@ -35,7 +35,7 @@ public class UserService {
         Department department = null;
 
         try {
-            department = restTemplate.getForObject("http://localhost:9000/users" + user.getDepartmentId(), Department.class);
+            department = restTemplate.getForObject("http://DEPARTMENT-SERVICE/departments/" + user.getDepartmentId(), Department.class);
         } catch (HttpStatusCodeException httpError) {
             log.error("User (id: {}) is associated with a non existing department (id: {})", user.getId(), user.getDepartmentId());
         }

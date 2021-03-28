@@ -1,9 +1,9 @@
 server:
-  port: 9000
+  port: 9191
 
 spring:
   application:
-    name: DEPARTMENT-SERVICE
+    name: GATEWAY
 
 eureka:
   client:
