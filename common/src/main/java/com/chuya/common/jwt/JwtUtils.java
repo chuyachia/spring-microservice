@@ -1,7 +1,5 @@
 package com.chuya.common.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -11,20 +9,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import javax.persistence.criteria.CriteriaBuilder;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
-@Component
-public class JWTUtils {
+public class JwtUtils {
     private final String secret;
     private final Integer validityMillis;
     private final SecretKey secretKey;
     private final JwtParser parser;
 
-    public JWTUtils(@Value("${jwt.secret}") String secret, @Value("${jwt.validity-millis}") Integer validityMillis) {
+    public JwtUtils(String secret, Integer validityMillis) {
         this.secret = secret;
         this.validityMillis = validityMillis;
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -53,8 +48,8 @@ public class JWTUtils {
 
     public String generateToken(Map<String, Object> claims, String subject) {
         String jwt = Jwts.builder()
-                .setSubject(subject)
                 .setClaims(claims)
+                .setSubject(subject)
                 .setExpiration(new Date(System.currentTimeMillis() + validityMillis))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();

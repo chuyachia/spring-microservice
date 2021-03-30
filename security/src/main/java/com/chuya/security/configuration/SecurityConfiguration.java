@@ -1,11 +1,14 @@
 package com.chuya.security.configuration;
 
+import com.chuya.common.jwt.JwtUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,17 +17,21 @@ import org.springframework.security.provisioning.UserDetailsManager;
 
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    public static final String ROLE_USER = "ROLE_USER";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
     @Override
     public UserDetailsService userDetailsServiceBean() throws Exception {
 
         UserDetails user = User.withUsername("user")
                 .password("{noop}1234")
-                .authorities("READ")
+                .authorities(new SimpleGrantedAuthority(ROLE_USER))
                 .build();
 
         UserDetails admin = User.withUsername("admin")
                 .password("{noop}1234")
-                .authorities("READ", "WRITE")
+                .authorities(new SimpleGrantedAuthority(ROLE_ADMIN))
                 .build();
 
         UserDetailsManager userDetailsManager = new InMemoryUserDetailsManager();
@@ -49,5 +56,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
+    }
+
+    @Bean
+    public JwtUtils jwtUtils(@Value("${jwt.secret}") String secret, @Value("${jwt.validity-millis}") Integer validityMillis) {
+        return new JwtUtils(secret, validityMillis);
     }
 }
