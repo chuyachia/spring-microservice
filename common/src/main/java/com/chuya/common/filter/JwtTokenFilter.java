@@ -1,6 +1,7 @@
 package com.chuya.common.filter;
 
 import com.chuya.common.jwt.JwtUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,15 +27,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
-        String header = httpServletRequest.getHeader("Authorization");
+        String header = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (header != null) {
+        if (header != null && header.startsWith("Bearer")) {
             String token = header.substring(7);
             String username = jwtUtils.getSubject(token);
             String entitlement = jwtUtils.getClaim(token, "entitlement", String.class);
             List<GrantedAuthority> authorities = Arrays.asList(entitlement.split(","))
                     .stream()
-                    .map(r-> new SimpleGrantedAuthority(r))
+                    .map(r -> new SimpleGrantedAuthority(r))
                     .collect(Collectors.toList());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);

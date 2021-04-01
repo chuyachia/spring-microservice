@@ -14,13 +14,14 @@ import java.util.Optional;
 public class DepartmentService {
     private final DepartmentRepository departmentRepository;
 
+    @PreAuthorize("hasAuthority('departments.read')")
     public Department getById(Long id) {
         Optional<Department> department = departmentRepository.findById(id);
         return department
                 .orElseThrow(() -> new NotFoundException(String.format("Department (id: %s) does not exist", id)));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('departments.write')")
     public Department saveDepartment(Department department) {
         return departmentRepository.save(department);
     }

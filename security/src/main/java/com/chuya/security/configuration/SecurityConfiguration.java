@@ -1,6 +1,7 @@
 package com.chuya.security.configuration;
 
 import com.chuya.common.jwt.JwtUtils;
+import com.chuya.common.model.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,12 +9,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
@@ -26,12 +31,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         UserDetails user = User.withUsername("user")
                 .password("{noop}1234")
-                .authorities(new SimpleGrantedAuthority(ROLE_USER))
+                .authorities(getAuthoritiesFromRole(Role.USER))
                 .build();
 
         UserDetails admin = User.withUsername("admin")
                 .password("{noop}1234")
-                .authorities(new SimpleGrantedAuthority(ROLE_ADMIN))
+                .authorities(getAuthoritiesFromRole(Role.ADMIN))
                 .build();
 
         UserDetailsManager userDetailsManager = new InMemoryUserDetailsManager();
@@ -61,5 +66,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public JwtUtils jwtUtils(@Value("${jwt.secret}") String secret, @Value("${jwt.validity-millis}") Integer validityMillis) {
         return new JwtUtils(secret, validityMillis);
+    }
+
+    private List<GrantedAuthority> getAuthoritiesFromRole(Role role) {
+        return role.authorities.stream()
+                .map(a -> new SimpleGrantedAuthority(a))
+                .collect(Collectors.toList());
     }
 }
