@@ -1,6 +1,7 @@
 package com.chuya.common.filter;
 
 import com.chuya.common.jwt.JwtUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
     public JwtTokenFilter(JwtUtils jwtUtils) {
         this.jwtUtils = jwtUtils;
@@ -30,18 +32,29 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String header = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (header != null && header.startsWith("Bearer")) {
-            String token = header.substring(7);
-            String username = jwtUtils.getSubject(token);
-            String entitlement = jwtUtils.getClaim(token, "entitlement", String.class);
-            List<GrantedAuthority> authorities = Arrays.asList(entitlement.split(","))
-                    .stream()
-                    .map(r -> new SimpleGrantedAuthority(r))
-                    .collect(Collectors.toList());
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+            try {
+                String token = header.substring(7);
+                String username = jwtUtils.getSubject(token);
+                String entitlement = jwtUtils.getClaim(token, "entitlement", String.class);
+                List<GrantedAuthority> authorities = Arrays.asList(entitlement.split(","))
+                        .stream()
+                        .map(r -> new SimpleGrantedAuthority(r))
+                        .collect(Collectors.toList());
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+            } catch (RuntimeException exception) {
+                sendError(httpServletResponse, exception.getMessage());
+            }
+        } else {
+            sendError(httpServletResponse, "Missing token in request header");
         }
 
         filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    private void sendError(HttpServletResponse httpServletResponse, String logMessage) throws IOException {
+        log.error(logMessage);
+        httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 }
